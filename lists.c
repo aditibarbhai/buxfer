@@ -1,3 +1,5 @@
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,9 +16,8 @@
 * which is why the first argument is a double pointer.) 
 */
 int add_group(Group **group_list_ptr, const char *group_name) {
-
-    // First, check if the group arleady exists
-    if ( find_group(group_list_ptr, group_name) ) {
+    // First, check if the group already exists
+    if ( find_group(*group_list_ptr, group_name) ) {
         return -1;      //group already exists.
     } else {
         //group doesn't exist, proceed to make one.
@@ -57,55 +58,6 @@ int add_group(Group **group_list_ptr, const char *group_name) {
             return 0;
         }
     }
-
-    // First, create a new pointer to a Group
-    Group *newGrp = malloc(sizeof(Group)); // use malloc memory allocation
-
-    if ( newGrp == NULL ) { //print error and exit
-        printf("Error when creating group pointer. Program will now exit. \n");
-        exit(0);
-    } else {
-        int LENGTH = strlen(group_name) + 1;
-        newGrp->name = malloc(LENGTH); //assign group name from the passed in param
-        // since name is char, we only need # of bytes = length of string + 1;
-
-        if ( newGrp->name == NULL ) {
-            printf("Error when adding group name. Program will now exit \n");
-            exit(0);
-        } else {
-            strncpy(newGrp->name, group_name, LENGTH ); // assign group_name as name of newGrp
-            newGrp->name[LENGTH] = '\0'; // add the terminating character
-            newGrp->next = NULL; // assign the next to NULL to indicate end of list.
-        }
-    }
-
-    // now that you've created your group and assigned it the name, time to add it to the group list.
-    // if group list is empty, just point the group list ptr to our newly created group.
-    if ( *group_list_ptr == NULL ) {
-        *group_list_ptr = newGrp;
-        return 0;
-    } else { // else traverse to the end of the list and add our new group there.
-
-        Group *currentGrp = *group_list_ptr; // create a new pointer for easy traversing
-
-        while ( currentGrp->next ) {
-            // first compare the current name with group_name
-            // if group with that name already exists, then return -1 and exit
-            if ( strcmp( newGrp->name, currentGrp->name ) == 0 )  {
-                return -1;
-            }
-                currentGrp = currentGrp->next;
-        }
-
-        // check last group - if same as newGrp, return -1
-        if ( strcmp( newGrp->name, currentGrp->name ) == 0 )  {
-            return -1;
-        } else {
-            // Add the our newly created group to the end of the group list.
-            currentGrp->next = newGrp;
-            return 0;
-        }
-    }
 }
 
 /* Print to standard output the names of all groups in group_list, one name
@@ -115,16 +67,13 @@ void list_groups(Group *group_list) {
 
     Group *currentGrp = group_list; // get a current ptr for easy traversal
 
-    if ( currentGrp == NULL ) { // if no groups exist yet, print blank line
-        printf(" \n");
-    } else {    // if groups exist, proceed
+    if ( currentGrp ) { // if groups exist, proceed
         while ( currentGrp->next ) { // go through & print all grps that have a "next"
             printf("%s \n", currentGrp->name);
             currentGrp = currentGrp->next;
         }
-
         printf("%s \n", currentGrp->name); // lastly, print the last grp (the one without next)
-    }
+    } else printf(" \n");   // if no groups exist yet, print blank line
 }
 
 /* Search the list of groups for a group with matching group_name
@@ -133,6 +82,8 @@ void list_groups(Group *group_list) {
 */
 Group *find_group(Group *group_list, const char *group_name) {
     Group *currentGrp = group_list;
+
+    if ( currentGrp == NULL ) return NULL;  // if group list is empty
 
     // iterate through the group list and look for group_name
     while( currentGrp->next ) {
@@ -146,7 +97,7 @@ Group *find_group(Group *group_list, const char *group_name) {
     // if not found in the previous elements, check the last element of group list
     if( strcmp( currentGrp->name, group_name ) == 0 ) {
         return currentGrp;
-    } else return NULL;
+    } else return NULL; // if group name not found
 
 }
 
@@ -157,11 +108,8 @@ Group *find_group(Group *group_list, const char *group_name) {
 */
 int add_user(Group *group, const char *user_name) {
     // ASSUMPTION : group exists
-
-    //User *user = group->users; // pointer for users list
-
     // check if user already exists in the group
-    if ( find_prev_user(group, user_name) != NULL ) {
+    if ( find_prev_user(group, user_name) != NULL ) {   // if user_name already in group, return -1
         return -1;
     } else {
         // if the user_name is not already in the group, then add new user to the beginning of group user list
@@ -194,50 +142,6 @@ int add_user(Group *group, const char *user_name) {
         }
         return 0;   // successfully add, return 0;
     }
-
- 
-
-    // Now that we've made a user, it's time to add it to the given group_name
-    // if ( group->users == NULL ) { // if group is empty, assign user and exit
-    //     group->users = newUsr;
-    //     return 0;
-    // } else {
-    //     User *user = group->users; //make pointer to first user for easy traversal
-
-        // iterate through the group users list, checking if the user already exists in the group
-        // while ( user->next ) {
-        //     if ( find_prev_user(group, user_name) != NULL ) return -1; //if user already in group, exit
-        //     user = user->next;
-        // }
-
-
-
-
-        // If user not in list, check the last element.
-        // if( find_prev_user(group, user_name) != NULL ) {
-        //     return -1;
-        // } else {
-        //     // if the last element != new user, then add new user to the beginning of group user list
-        //     newUsr->next = group->users;    // since lowest paying user first, add newUsr to beginning of list
-        //     group->users = newUsr;
-        //     return 0;
-        // }
-}
-
-/*
- * This is helper function for remove_user. Helpds reduce repeated code.
- */
-int _remove_user_code(Group *group, const char *user_name, User *currentUser, User *prevUser) {
-    prevUser = find_prev_user(group, currentUser->name);
-    if ( prevUser->name == currentUser->name ) { //if first element
-        group->users = currentUser->next; // redirect head to #2 (next)
-    } else {
-        prevUser->next = currentUser->next; // redirect prev pointer to next
-    }
-    currentUser->next = NULL;  // break link with rest of the list
-    free(currentUser);  // free memory
-    remove_xct(group, user_name); //remove all transactions associated with this user
-    return 0;
 }
 
 /* Remove the user with matching user and group name and
@@ -249,36 +153,27 @@ int _remove_user_code(Group *group, const char *user_name, User *currentUser, Us
 */
 int remove_user(Group *group, const char *user_name) {
     User *currentUser = group->users;
-    User *prevUser = currentUser;
+    User *prevUser = NULL;
 
-    if ( currentUser ) {
-        while ( currentUser->next ) {
-            if ( strcmp(currentUser->name, user_name) == 0 ) {
-                // if in group, then we are going to remove it
-                prevUser = find_prev_user(group, currentUser->name);
-                if ( prevUser->name == currentUser->name ) { //if first element
-                    group->users = currentUser->next; // redirect head to #2 (next)
+    if ( currentUser ) {    // if the group has any users
+        prevUser = find_prev_user(group, user_name);
+        if ( prevUser ) {
+            if ( strcmp(prevUser->name, user_name) == 0 ) {
+                currentUser = prevUser; // the first user = user_name
+                if ( currentUser->next != NULL ) { // if more than one user in the group
+                    group->users = currentUser->next; // redirect head to user #2 (next)
                 } else {
-                    prevUser->next = currentUser->next; // redirect prev pointer to next
+                    group->users = NULL;    // if current user is only one, assign list to NULL
                 }
-                currentUser->next = NULL;  // break link with rest of the list
-                free(currentUser);  // free memory
-                remove_xct(group, user_name); //remove all transactions associated with this user
-                return 0;
+            } else {
+                currentUser = prevUser->next;
+                prevUser->next = currentUser->next; // redirect prev pointer to next
             }
-            currentUser = currentUser->next;
-        }
-
-        // check the last element
-        if ( strcmp(currentUser->name, user_name) == 0 ) {
-            prevUser = find_prev_user(group, currentUser->name);
-            prevUser->next = NULL; // redirect prev pointer to next
+            currentUser->next = NULL;  // break link with rest of the list
             free(currentUser);  // free memory
-            remove_xct(group, user_name); //remove all transactions associated with this user
+            remove_xct(group, user_name); // remove all transactions associated with this user
             return 0;
-        }
-
-        return -1;  // if not found in the user list, then return -1
+        } else return -1; // user not in group
     } else return -1;
 }
 
@@ -290,16 +185,14 @@ void list_users(Group *group) {
     // ASSUMPTION : group exists (since buxfer checks for group before calling this func )
     User *userPtr = group->users; // list of all users
 
-    if ( userPtr == NULL ) {    // if not users exist yet, print blank line
-        printf(" \n");
-    } else {    // if users exist, proceed
+    if ( userPtr ) {    // if 1 or more users exist
         while ( userPtr->next ) { // iterate through user list, print out all users
             printf("%s \n", userPtr->name);
             userPtr = userPtr->next;
         }
 
         printf("%s \n", userPtr->name); // last user
-    }
+    } else printf(" \n");   // if no users, print blank line
 }
 
 /* Print to standard output the balance of the specified user. Return 0
@@ -325,25 +218,6 @@ int user_balance(Group *group, const char *user_name) {
             }
         } else return -1;   // user not in this group.
     } else return -1;   // user list is empty, user does not exist in this group.
-
-    // User *currentUser = group->users;   // pointer to user group user list
-
-    // if( currentUser == NULL ) {  // if user list is empty, exit
-    //     return -1;
-    // } else {
-    //     while ( currentUser->next ) {  // iterate through all the users
-    //         if ( strcmp(currentUser->name, user_name) == 0 ) { // check to see if currentUser = user_name
-    //             printf("$%.2f\n", currentUser->balance); // if it does, then print the balance and exit
-    //             return 0;
-    //         }
-    //         currentUser = currentUser->next;
-    //     }
-
-    //     if( strcmp(currentUser->name, user_name) == 0 ) { // if not found above, check last element
-    //         printf("$%.2f \n", currentUser->balance);
-    //         return 0;
-    //     } else return -1;   // if not found in last element + rest of list, exit by returning -1;
-    // }
 }
 
 /* Print to standard output the name of the user who has paid the least 
@@ -354,12 +228,14 @@ int user_balance(Group *group, const char *user_name) {
 int under_paid(Group *group) {
     // ASSUMPTION : group exists ( since buxfer checks for group before calling this )
     User *currentUser = group->users;
-    if ( currentUser == NULL ) {
-        return -1;  // no users in this group
-    } else {
-
-        User *underPaid = currentUser;  //assign "underPaid" pointer to currentUser (#1 which is always the lowest)
+    if ( currentUser ) {
+        User *underPaid = currentUser;  // assign "underPaid" pointer to currentUser (#1 which is always the lowest)
         while ( currentUser->next ) {
+            /*
+             * Iterate through the list, comparing each user to the underPaid one.
+             * If the user balance of current user is less than or equal to that of underPaid, then
+             * it gets printed to screen.
+             */
             if ( currentUser->balance <= underPaid->balance ) {
                 // if the currentUser balance is <= to the underpaid balance, then print to screen
                 printf("%s\n", currentUser->name);
@@ -370,8 +246,8 @@ int under_paid(Group *group) {
         if ( currentUser->balance <= underPaid->balance ) { // check the last element
             printf("%s\n", currentUser->name );
         }
-        return 0;   // successful
-    }
+        return 0;   // successful exit
+    } else return -1;  // no users in this group
 }
 
 /* Return a pointer to the user prior to the one in group with user_name. If 
@@ -388,9 +264,7 @@ User *find_prev_user(Group *group, const char *user_name) {
 
     User *previous, *current; // pointers for previous and current users
 
-    if ( group->users == NULL ) {
-        return NULL;
-    } else {
+    if ( group->users ) { // if there are users in the group
         current = group->users; // assign current to the head of the group user list
         // case 1 : 1 user
         if( current->next == NULL ){
@@ -399,20 +273,18 @@ User *find_prev_user(Group *group, const char *user_name) {
             } else return NULL;
         } else {
             // case 2 : multiple users
-            previous = current;
-
             // Check current (head = first user)
             if ( strcmp(current->name, user_name) == 0 ) {
-                return previous;
+                return current;     // if first user = user_name, return the first element itself.
             } else {
                 // if it's not the first one, proceed to further users
+                previous = current;
                 current = current->next;
-
                 while ( current->next ) {
-                    if ( strcmp(current->name, user_name) == 0 ) {
-                        return previous;
+                    if ( strcmp(current->name, user_name) == 0 ) {  // if the current = user_name
+                        return previous;    // return the pointer to the previous user
                     }
-                    previous = current;
+                    previous = current; // reassign previous and current, continue to iterate
                     current = current->next;
                 }
 
@@ -420,30 +292,28 @@ User *find_prev_user(Group *group, const char *user_name) {
                     return previous;
                 }
             }
-            return NULL; // if in none of these, return NULL.
+            return NULL; // if user not found in the group, return NULL.
         }
-    }
+    } else return NULL; // if no users in the group, return NULL.
 }
 
 /*
-* Meant to be used inside add_xct, with it's parameters.
+ * Meant to be used inside add_xct, with it's parameters.
+ * This bit of code makes a new transaction, then adds it to the head of the xcts struct
 */
 
 void _xct_helper (Group *group, const char *user_name, double amount) {
     Xct *newTrans = malloc(sizeof(Xct));    // make new transaction
-    if ( newTrans == NULL ) {
-        printf("Error while making a new transaction. \n");
-        exit(0);
-    } else {
+    if ( newTrans != NULL ) {
         int LENGTH = strlen(user_name) + 1;
         newTrans->name = malloc(LENGTH); // make new transaction name element
-        if ( newTrans->name == NULL ) {
-            printf("Error while making new transaction name.\n");
-            exit(0);
-        } else {
+        if ( newTrans->name != NULL ) {
             strncpy(newTrans->name, user_name, LENGTH ); // assign user_name as name of transaction
             newTrans->name[LENGTH] = '\0';
             newTrans->amount = amount;  // assign amount to the transaction
+        } else {
+            printf("Error while making new transaction name.\n");
+            exit(0);
         }
 
         if (  group->xcts == NULL ) {   // if no transactions, just assign it to transaction
@@ -453,6 +323,9 @@ void _xct_helper (Group *group, const char *user_name, double amount) {
             newTrans->next = group->xcts;
             group->xcts = newTrans;
         }
+    } else {
+        printf("Error while making a new transaction. \n");
+        exit(0);
     }
 }
 
@@ -460,6 +333,8 @@ void _xct_helper (Group *group, const char *user_name, double amount) {
 *   This is a helper function for add transaction. It updates the user position in the user list,
 *   rearranging the list in an ascending order, so that the lowest paying users are at the beginning.
 *   return 0 = success; return -1 = fail.
+*   @param user -- this is a pointer to user to be repositioned.
+*   @param group -- a pointer to your group (in which the user is).
 */
 
 int _update_user_position(Group *group, User *user){
@@ -467,7 +342,6 @@ int _update_user_position(Group *group, User *user){
     // make new placeholder pointers to be used here
     User *prevUser;
     User *currentUser = group->users; //get the head
-    // d_user = user
 
     if ( user == NULL ) { // if invalid user input
         return -1;
@@ -483,10 +357,10 @@ int _update_user_position(Group *group, User *user){
         */
         prevUser = find_prev_user(group, user->name);
 
-        if ( strcmp(prevUser->name, user->name) == 0 ) {  // if first element
+        if ( strcmp(prevUser->name, user->name) == 0 ) {  // if first user
             group->users = user->next; // redirect head to #2 (next)
             user->next = NULL;  // break link with rest of the list
-        } else {
+        } else {    // if middle user
             prevUser->next = user->next;    // redirect previous pointer to next
             user->next = NULL;  // break link with next/rest of the list
         }
@@ -505,7 +379,6 @@ int _update_user_position(Group *group, User *user){
                 prevUser = find_prev_user(group, currentUser->name);    // find previous user
                 prevUser->next = user;    // redirect it's pointer to our user
                 user->next = currentUser; // point our user's next to current user
-                //group->users = currentUser;
                 return 0;   // exit successfully
             }
             currentUser = currentUser->next;
@@ -516,13 +389,11 @@ int _update_user_position(Group *group, User *user){
             prevUser = find_prev_user(group, currentUser->name);
             prevUser->next = user;
             user->next = currentUser;
-           // group->users = currentUser;
             return 0;
         }
 
         // if our user balance is greater than the entire list, place it at the end and exit
         currentUser->next = user;
-        //group->users = currentUser;
         return 0;
     }
 }
@@ -534,29 +405,23 @@ int _update_user_position(Group *group, User *user){
 * success, and -1 if the specified user does not exist.
 */
 int add_xct(Group *group, const char *user_name, double amount) {
-    // Check if user exists
-    User *user = group->users;
-    while ( user->next ) {
-        if ( strcmp(user->name, user_name) == 0 ) { // if user in group
-            _xct_helper(group, user_name, amount);  // add the transaction to xct node
-            user->balance = user->balance + amount; // update user balance
-            if ( _update_user_position(group, user) == 0 ) { // update user position based on new balance
-                return 0;
-            }
-        }
-        user = user->next;
-    }
+    User *prevUser = NULL; // pointer for previous user
+    User *user = NULL; // pointer to user associated with this transaction
 
-    // Check the last element
-    if ( strcmp(user->name, user_name) == 0 ) {
+    // Check if user exists
+    prevUser = find_prev_user(group, user_name);
+
+    if ( prevUser ) {   // if user in group
+        if ( strcmp(prevUser->name, user_name) == 0 ) {
+            user = prevUser;
+        } else {
+            user = prevUser->next;
+        }
         _xct_helper(group, user_name, amount);  // add the transaction to xct node
         user->balance = user->balance + amount; // update user balance
-        if ( _update_user_position(group, user) == 0 ) { // update user position based on new balance
-            return 0;
-        }
-    }
-
-    return -1;  // user not found in group
+        _update_user_position(group, user);     // update user position based on new balance
+        return 0;
+    } else return -1; // user does not exist in this group
 }
 
 /* Print to standard output the num_xct most recent transactions for the 
@@ -575,7 +440,7 @@ void recent_xct(Group *group, long nu_xct) {
     } else {
         long num;
         for ( num = nu_xct ; num > 0; num-- ) {
-            printf("Transaction # %s; Amount: %.2f.\n", xctPtr->name, xctPtr->amount);
+            printf("Transaction #%s; Amount: %.2f.\n", xctPtr->name, xctPtr->amount);
             if( xctPtr->next == NULL ) {
                 break;
             }
@@ -591,33 +456,34 @@ void recent_xct(Group *group, long nu_xct) {
 */
 
 void remove_xct(Group *group, const char *user_name) {
-    Xct *currentXct = group->xct;
+    Xct *currentXct = group->xcts;  // make your pointers
     Xct *prevXct = NULL;
 
-    if ( currentXct ) {
+    if ( currentXct ) { // if there are any transactions
         while ( currentXct->next ) {
+            // iterate through xcts to find ones associated with given user_name
+            // then get the previous pointer and point it to then next,
+            // free up memory and then go on down the list. Continue till last element.
             if ( strcmp(currentXct->name, user_name) == 0 ) {
                 if ( prevXct == NULL  ) {
-                    group->xct = currentXct->next; 
+                    group->xcts = currentXct->next;
                 } else {
                     prevXct->next = currentXct->next;
                 }
-                currentXct->next = NULL;
+                //currentXct->next = NULL;
                 free(currentXct);
             }
             prevXct = currentXct;
             currentXct = currentXct->next;
         }
 
-        // last transaction
         if ( strcmp(currentXct->name, user_name) == 0 ) {
-            if ( prevXct == NULL  ) {
-                group->xct = currentXct->next; 
-            } else {
-                prevXct->next = currentXct->next;
+            if ( prevXct == NULL ) {    // if this is the only transaction
+                group->xcts = NULL;
+            } else {    // if this is the last transaction
+                free(currentXct);
+                prevXct->next = NULL;
             }
-            currentXct->next = NULL;
-            free(currentXct);
         }
     }
 }
